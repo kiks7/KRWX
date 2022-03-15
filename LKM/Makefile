@@ -1,6 +1,6 @@
 obj-m += krwx.o
 
-K=/home/parallels/hacking/kernel/linux-4.4.117/
+K=<>
 
 all:
 	make -C $K M=$(PWD) modules
