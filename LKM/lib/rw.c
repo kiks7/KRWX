@@ -11,7 +11,7 @@
 
 
 int ioctl_rw_read(struct msg_read* read_msg){
-    pr_info("ioctl_rw::ioctl_rw_read\n"); 
+    //pr_info("ioctl_rw::ioctl_rw_read\n"); 
     /* NOT TESTED BELOW (coding blindly) */
     if( cc_copy_to_user(read_msg->content, (uint64_t *) read_msg->kaddress, sizeof(uint64_t)) )
        return -EFAULT;
@@ -22,7 +22,7 @@ int ioctl_rw_read(struct msg_read* read_msg){
 }
 
 unsigned long ioctl_rw_write(struct msg_write* write_msg){
-    pr_info("ioctl_rw::ioctl_rw_write\n");
+    //pr_info("ioctl_rw::ioctl_rw_write\n");
     //struct msg_write write_msg;
     if( cc_copy_from_user(write_msg->kaddress, (void*) write_msg->value, sizeof(uint64_t)) )
         return -EFAULT;

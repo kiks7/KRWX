@@ -68,25 +68,25 @@ int krwx_release(struct inode *inode, struct file *file){
 
 long int krwx_ioctl(struct file *fp, unsigned int cmd, unsigned long arg){
     struct msg_read read_msg;
-    pr_info("krwx::ioctl\n");
+    //pr_info("krwx::ioctl\n");
     
     switch(cmd){
         case IOCTL_RW_READ:
-            pr_info("IOCTL: IOCTL_RW_READ\n"); 
+            //pr_info("IOCTL: IOCTL_RW_READ\n"); 
             if(copy_from_user( &read_msg, (struct msg_read*) arg, sizeof(struct msg_read)))
                 return -EFAULT;
             ioctl_rw_read(&read_msg);
             break;
         case IOCTL_RW_WRITE:
-            pr_info("IOCTL: IOCTL_RW_WRITE\n"); 
+            //pr_info("IOCTL: IOCTL_RW_WRITE\n"); 
             ioctl_rw_write((struct msg_write *) arg);
             break;
         case IOCTL_KMALLOC:
-            pr_info("IOCLT: IOCTL_KMALLOC");
+            //pr_info("IOCLT: IOCTL_KMALLOC");
             ioctl_kmalloc((struct io_kmalloc *) arg);
             break;
         case IOCTL_KFREE:
-            pr_info("IOCLT: IOCTL_KFREE");
+            //pr_info("IOCLT: IOCTL_KFREE");
             ioctl_kfree((void*) arg);
             break;
         default:
@@ -112,3 +112,6 @@ ssize_t krwx_read(struct file * file, char __user *buf, size_t count, loff_t *po
 module_init(krwx_init);
 module_exit(krwx_exit);
 
+MODULE_AUTHOR("Alessandro Groppo @kiks");
+MODULE_DESCRIPTION("Kernel Read Write Execute");
+MODULE_LICENSE("GPL");
