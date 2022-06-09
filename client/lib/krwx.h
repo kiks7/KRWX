@@ -113,16 +113,16 @@ int kwrite64(void* address, uint64_t value){
 
 void multiple_kmalloc(void** array, uint32_t n_objs, uint32_t size){
     gfp_t _flags = _GFP_KERN;
-    printf("[*] Allocating %d chunks with size %ld\n", n_objs, size);
+    printf("[*] Allocating %d chunks with size %d\n", n_objs, size);
     for( int i = 0; i < n_objs; i = i + 1) {
         array[i] = kmalloc(size, _flags);
-        printf("[*] Allocated @0x%lx\n", array[i]);
+        printf("[*] Allocated @0x%lx\n", (unsigned long) array[i]);
     } 
 }
 
 void multiple_kfree(void** array, uint64_t to_free[], uint64_t to_free_size){
     for( int i = 0; i < to_free_size ; i = i + 1){
-        printf("[*] Freeing @0x%lx\n", array[to_free[i]]);
+        printf("[*] Freeing @0x%lx\n", (unsigned long) array[to_free[i]]);
         kfree(array[to_free[i]]);
     }
 }
@@ -135,4 +135,8 @@ int init_krwx(){
         exit(-1);
     }
     return 0;
+}
+
+void __attribute__ ((constructor)) setup(void) {
+    init_krwx();
 }

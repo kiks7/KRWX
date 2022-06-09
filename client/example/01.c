@@ -7,7 +7,7 @@
 #include "./lib/krwx.h"
 
 int main(){
-    init_krwx();
+    //init_krwx();
     void* chunks[10];
     multiple_kmalloc(&chunks, 10, 256);
     kwrite64(chunks[7], 0x4141414141414141);

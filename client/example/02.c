@@ -2,7 +2,7 @@
 #include <netinet/in.h>
 
 int main(){
-    init_krwx();
+    //init_krwx();
     void* chunk = kmalloc(150, _GFP_KERN);
     printf("Allocated chunk @%p\n", chunk);
 
