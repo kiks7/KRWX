@@ -10,6 +10,14 @@
 #define IOCTL_RW_WRITE  0xffd5
 #define IOCTL_KMALLOC   0x34
 #define IOCTL_KFREE             0x35
+#define IOCTL_MEMK_CREATE   0xdd00
+#define IOCTL_MEMK_ALLOC    0xdd01
+#define IOCTL_MEMK_FREE     0xdd02
+#define IOCTL_TEST_KMEM     0xaaff
+
+#define MAX_KMEM    10
+#define NAME_SZ     8
+
 
 typedef unsigned int gfp_t;
 #define _GFP_USER 0x100cc0
@@ -19,11 +27,13 @@ typedef unsigned int gfp_t;
 struct msg_read{
     void* kaddress;
     uint64_t* content; // Init 0 from client-side
+    uint64_t size;
 };
 
 struct msg_write{
     void* kaddress;
     uint64_t* value;
+    uint64_t size;
 };
 
 struct io_kmalloc {
@@ -31,6 +41,29 @@ struct io_kmalloc {
     gfp_t flags;
     void* result; // userland kmalloc return address
 };
+
+
+struct io_kmem_create {
+    int index;
+    size_t obj_size;
+    size_t align;
+    unsigned long flags;
+    size_t useroffset;
+    size_t usersize;
+    char name[NAME_SZ];
+};
+
+struct io_kmem_alloc{
+    unsigned int index;
+    gfp_t flags;
+    void* result;
+};
+
+struct io_kmem_free{
+    unsigned int index;
+    void* pointer;
+};
+
 
 
 int krwx_init(void);
