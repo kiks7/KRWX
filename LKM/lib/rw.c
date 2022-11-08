@@ -13,22 +13,33 @@
 
 extern struct kmem_cache* global_kmem[];
 
-int ioctl_rw_read(struct msg_read* read_msg){
+int ioctl_rw_read(struct msg_read* user_read_msg){
     //pr_info("ioctl_rw::ioctl_rw_read\n"); 
-    if( cc_copy_to_user(read_msg->content, (uint64_t *) read_msg->kaddress, read_msg->size) ){
-        pr_info("EFAULT GENERATED\n"); 
-       return -EFAULT;
-    }
+    //if( cc_copy_to_user(read_msg->content, (uint64_t *) read_msg->kaddress, read_msg->size) ){
+    //    pr_info("EFAULT GENERATED\n"); 
+    //   return -EFAULT;
+    //}
 
-    //pr_info("msg_read->kaddress --> %p\n", read_msg->kaddress);
+    struct msg_read read_msg;
+    unsigned long result;
+    if( cc_copy_from_user(&read_msg, (void*) user_read_msg, sizeof(struct msg_read)) )
+        return -EFAULT;
+    memcpy(&result, read_msg.kaddress, sizeof(unsigned long));
+    if( put_user(result, &user_read_msg->content) )
+      return -EFAULT;
      
     return 0;
 }
 
-unsigned long ioctl_rw_write(struct msg_write* write_msg){
+unsigned long ioctl_rw_write(struct msg_write* user_write_msg){
     //pr_info("ioctl_rw::ioctl_rw_write\n");
-    if( cc_copy_from_user(write_msg->kaddress, (void*) write_msg->value, write_msg->size) )
+    //if( cc_copy_from_user(write_msg->kaddress, (void*) write_msg->value, write_msg->size) )
+    //    return -EFAULT;
+
+    struct msg_write write_msg;
+    if( cc_copy_from_user(&write_msg, (void*) user_write_msg, sizeof(struct msg_write)) )
         return -EFAULT;
+    memcpy(write_msg.kaddress, &write_msg.value, write_msg.size);
     return 0;
 }
 

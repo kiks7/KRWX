@@ -69,49 +69,44 @@ int krwx_release(struct inode *inode, struct file *file){
 struct kmem_cache* global_kmem[MAX_KMEM];
 
 long int krwx_ioctl(struct file *fp, unsigned int cmd, unsigned long arg){
-    struct msg_read read_msg;
-    //pr_info("krwx::ioctl\n");
-    
+    long int ret = 0x0;
     switch(cmd){
         case IOCTL_RW_READ:
-            //pr_info("IOCTL: IOCTL_RW_READ\n"); 
-            if(copy_from_user( &read_msg, (struct msg_read*) arg, sizeof(struct msg_read)))
-                return -EFAULT;
-            ioctl_rw_read(&read_msg);
+            ret = ioctl_rw_read((struct msg_read*) arg);
             break;
         case IOCTL_RW_WRITE:
             //pr_info("IOCTL: IOCTL_RW_WRITE\n"); 
-            ioctl_rw_write((struct msg_write *) arg);
+            ret = ioctl_rw_write((struct msg_write *) arg);
             break;
         case IOCTL_KMALLOC:
             //pr_info("IOCTL: IOCTL_KMALLOC");
-            ioctl_kmalloc((struct io_kmalloc *) arg);
+            ret = ioctl_kmalloc((struct io_kmalloc *) arg);
             break;
         case IOCTL_KFREE:
             //pr_info("IOCTL: IOCTL_KFREE");
-            ioctl_kfree((void*) arg);
+            ret = ioctl_kfree((void*) arg);
             break;
         case IOCTL_MEMK_CREATE:
             //pr_info("IOCTL: IOCTL_KMEM_CREATE");
-            ioctl_kmem_create_usercopy((struct io_kmem_create*) arg);
+            ret = ioctl_kmem_create_usercopy((struct io_kmem_create*) arg);
             break;
         case IOCTL_MEMK_ALLOC:
             //pr_info("IOCTL: IOCTL_KFREE");
-            ioctl_kmem_alloc((struct io_kmem_alloc*) arg);
+            ret = ioctl_kmem_alloc((struct io_kmem_alloc*) arg);
             break;
         case IOCTL_MEMK_FREE:
             //pr_info("IOCTL: IOCTL_MEMK_FREE");
-            ioctl_kmem_free((struct io_kmem_free*) arg);
+            ret = ioctl_kmem_free((struct io_kmem_free*) arg);
             break;
         case IOCTL_TEST_KMEM:
             //pr_info("IOCTL: IOCTL_TEST_KMEM");
-            ioctl_kmem_test((unsigned long) arg);
+            ret = ioctl_kmem_test((unsigned long) arg);
             break;
         default:
             //pr_info("No IOCTL command identified\n");
             break;
     }
-    return 0;
+    return ret;
 }
 
 

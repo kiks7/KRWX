@@ -36,17 +36,17 @@ typedef unsigned int gfp_t;
 #define SLAB_ACCOUNT 0x4000000
 #define SLAB_HWCACHE_ALIGN 0x2000
 
-#define NAME_SZ   8
+#define NAME_SZ   20
 
 struct msg_read{
     void* kaddress;
-    uint64_t* content;
+    uint64_t content;
     uint64_t size;
 };
 
 struct msg_write{
     void* kaddress;
-    uint64_t* value;
+    uint64_t value;
     uint64_t size;
 };
 
@@ -104,22 +104,18 @@ int kfree(void* address){
 
 unsigned long int kread64(void* address){
     struct msg_read msg;
-    uint64_t content;
-    content = 0x0;
     msg.kaddress = address;
-    //msg.content = &content;
-    msg.content = address;
+    msg.content = 0x0;
     msg.size = sizeof(uint64_t);
-    int res = ioctl(fd_dev, IOCTL_RW_READ, &msg);
-    printf("res2: %d\n", res);
-    if( res ){
+    if( ioctl(fd_dev, IOCTL_RW_READ, &msg )){
         perror("[-] IOCTL_RW_READ Failed\n");
         return -1;
     }
-    return content;
+    return msg.content;
 }
 
 uint64_t* kread(void* address, uint64_t size){
+    // TODO: To change, not working anymore this function
     struct msg_read msg;
     uint64_t* ptr_content = malloc(size);
     memset(ptr_content, 0x0, size * sizeof(uint64_t));
@@ -156,7 +152,7 @@ void read_memory(void* start_address, size_t size){
 int kwrite64(void* address, uint64_t value){
     struct msg_write mw;
     mw.kaddress = address;
-    mw.value = &value;
+    mw.value = value;
     mw.size = sizeof(uint64_t);
     if( ioctl(fd_dev, IOCTL_RW_WRITE, &mw) ){
         perror("[-] IOCTL_RW_WRITE Failed\n");
