@@ -14,9 +14,10 @@
 #define IOCTL_MEMK_ALLOC    0xdd01
 #define IOCTL_MEMK_FREE     0xdd02
 #define IOCTL_TEST_KMEM     0xaaff
+#define IOCTL_MEMK_GET      0xbab3
 
 #define MAX_KMEM    10
-#define NAME_SZ     8
+#define NAME_SZ     20
 
 
 typedef unsigned int gfp_t;
@@ -24,15 +25,23 @@ typedef unsigned int gfp_t;
 #define _GFP_KERN 0xcc0
 
 
+// Since it's not possible to uset kmem_cache*, here you go :/
+// Its doesn't contain everything, but just what we need
+struct kmem_cache {
+  char pad[0x60];
+  const char* name;
+  struct list_head list;
+};
+
 struct msg_read{
     void* kaddress;
-    uint64_t* content; // Init 0 from client-side
+    uint64_t content; // Init 0 from client-side
     uint64_t size;
 };
 
 struct msg_write{
     void* kaddress;
-    uint64_t* value;
+    uint64_t value;
     uint64_t size;
 };
 
@@ -44,7 +53,7 @@ struct io_kmalloc {
 
 
 struct io_kmem_create {
-    int index;
+    void* result;
     size_t obj_size;
     size_t align;
     unsigned long flags;
@@ -54,14 +63,19 @@ struct io_kmem_create {
 };
 
 struct io_kmem_alloc{
-    unsigned int index;
+    void* kmem_addr;
     gfp_t flags;
     void* result;
 };
 
 struct io_kmem_free{
-    unsigned int index;
+    void* kmem_addr;
     void* pointer;
+};
+
+struct io_kmem_get{
+  void* result;
+  char name[NAME_SZ];
 };
 
 
@@ -74,4 +88,6 @@ int krwx_release(struct inode *inode, struct file *file);
 long int krwx_ioctl(struct file *fp, unsigned int cmd, unsigned long arg);
 ssize_t krwx_write(struct file *, const char *, size_t, loff_t *);
 ssize_t krwx_read(struct file *, char *, size_t, loff_t *);
+
+
 

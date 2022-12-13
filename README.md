@@ -27,6 +27,7 @@ Other than classic wrappers, the library offers more functions that can be usefu
 - `multiple_kmalloc(void** array, uint32_t n_objs, uint32_t size)` and `multiple_kfree(void** array, uint64_t to_free[], uint64_t to_free_size)` respectevly used to allocate and free multiple chunks using `kmalloc`/`kfree`.
 - ` read_memory(void* start_address, size_t size)` read `size` bytes of memory starting from `start_address`.
 - `read_userland_memory(void* start_address, size_t size)` reads userland memory.
+- `kmem_cache_get(char* name)` retrieve the address of the specified `kmem_cache`. It can be used to allocate/free objects in the requested cache using `kmem_cache_alloc` and `kmem_cache_free` (see `client/example/kmem_cache_get.c`).
 
 ## Setup
 To compile the module change the `K` variable in the `Makefile` with your compiled kernel root directory and compile with `make`, then `insmod`.
@@ -65,11 +66,11 @@ multiple_kfree(&chunks, &to_free, ( sizeof(to_free) / sizeof(uint64_t) ) );
 Once they are freed, new chunks with the same size are allocated and initialized with `0x4343434343434343`, and the memory of the 7h freed chunk is displayed using `read_memory` again:
 
 ```C
-kwrite64(kmalloc(256, _GFP_KERN), 0x4343434343434343);
-kwrite64(kmalloc(256, _GFP_KERN), 0x4343434343434343);
-kwrite64(kmalloc(256, _GFP_KERN), 0x4343434343434343);
-kwrite64(kmalloc(256, _GFP_KERN), 0x4343434343434343);
-kwrite64(kmalloc(256, _GFP_KERN), 0x4343434343434343);
+kwrite64(kmalloc(256, GFP_KERNEL), 0x4343434343434343);
+kwrite64(kmalloc(256, GFP_KERNEL), 0x4343434343434343);
+kwrite64(kmalloc(256, GFP_KERNEL), 0x4343434343434343);
+kwrite64(kmalloc(256, GFP_KERNEL), 0x4343434343434343);
+kwrite64(kmalloc(256, GFP_KERNEL), 0x4343434343434343);
 read_memory(chunks[7], 0x10);
 ```
 
@@ -110,7 +111,7 @@ For example, if we want to simulate an attack scenario where we want to replace 
 
 ```C
 // Allocate the vulnerable object
-void* chunk = kmalloc(150, _GFP_KERN);
+void* chunk = kmalloc(150, GFP_KERNEL);
 // Allocate target object
 struct iovec iov[10] = {0};
 char iov_buf[0x100];

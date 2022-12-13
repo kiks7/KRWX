@@ -13,7 +13,6 @@
 #include <linux/poll.h>
 #include <linux/sched.h>
 #include <linux/bitops.h>
-#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/goldfish.h>
 #include <linux/mm.h>
@@ -23,6 +22,8 @@
 #include <linux/printk.h>
 #include "krwx.h"
 #include "lib/rw.c"
+#include <linux/slab.h>
+
 
 // Define FOPS
 static const struct file_operations krwx_fops = {
@@ -39,6 +40,8 @@ static struct miscdevice krwx_miscdev = {
     .fops = &krwx_fops,
 };
 
+
+struct kmem_cache* dumb_kmem = NULL;
 int krwx_init(void){
     // Register character device
     int err = 0;
@@ -48,6 +51,12 @@ int krwx_init(void){
         pr_err("Unable to register KRWX driver\n");
         return err;
     }
+    // Creating dumb kmem_cache just to retrieve its list (and have all slab_caches)
+    dumb_kmem = kmem_cache_create("dumb_krwx", 16, 8, SLAB_ACCOUNT, NULL);
+    if(IS_ERR(dumb_kmem))
+      pr_info("Error allocating the dumb cache\n");
+
+    
     return 0;
 }
 
@@ -101,6 +110,10 @@ long int krwx_ioctl(struct file *fp, unsigned int cmd, unsigned long arg){
         case IOCTL_TEST_KMEM:
             //pr_info("IOCTL: IOCTL_TEST_KMEM");
             ret = ioctl_kmem_test((unsigned long) arg);
+            break;
+        case IOCTL_MEMK_GET:
+            //pr_info("IOCTL: IOCTL_TEST_KMEM");
+            ret = ioctl_kmem_get((struct io_kmem_get*) arg);
             break;
         default:
             //pr_info("No IOCTL command identified\n");

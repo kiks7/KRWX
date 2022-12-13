@@ -12,6 +12,7 @@
 #endif
 
 extern struct kmem_cache* global_kmem[];
+extern struct kmem_cache* dumb_kmem;
 
 int ioctl_rw_read(struct msg_read* user_read_msg){
     //pr_info("ioctl_rw::ioctl_rw_read\n"); 
@@ -62,15 +63,16 @@ int ioctl_kfree(void* arg){
 #ifdef CONFIG_HARDENED_USERCOPY
 int ioctl_kmem_create_usercopy(struct io_kmem_create* __user user_kmem){
     struct io_kmem_create kmem;
+    void* kmem_addr;
     if( cc_copy_from_user(&kmem, (void*) user_kmem, sizeof(struct io_kmem_create)) )
         return -EFAULT;
-    if(kmem.index >= MAX_KMEM){
-        pr_info("Index too large\n");
+    pr_info("Creating cache with name: %s", kmem.name);
+    kmem_addr = kmem_cache_create_usercopy(kmem.name, kmem.obj_size, kmem.align, kmem.flags, kmem.useroffset, kmem.usersize, NULL);
+    if( IS_ERR(kmem_addr) )
         return -EFAULT;
-    }
-    global_kmem[kmem.index] = kmem_cache_create_usercopy(kmem.name, kmem.obj_size, kmem.align, kmem.flags, kmem.useroffset, kmem.usersize, NULL);
-    if(!global_kmem[kmem.index])
-        return -EFAULT;
+
+    if( put_user(kmem_addr, &user_kmem->result) )
+      return -EFAULT;
 
     return 0;
 }
@@ -82,20 +84,19 @@ int ioctl_kmem_create_usercopy(struct io_kmem_create* __user user_kmem){
 
 #endif
 
+
+
 int ioctl_kmem_alloc(struct io_kmem_alloc* __user user_kmem){
     void* obj;
     struct io_kmem_alloc kmem;
+
     if( cc_copy_from_user(&kmem, (void*) user_kmem, sizeof(struct io_kmem_alloc)) )
         return -EFAULT;
 
-    if(kmem.index >= MAX_KMEM){
-        pr_info("Index too large\n");
-        return -EFAULT;
-    }
-
-    obj = kmem_cache_alloc(global_kmem[kmem.index], kmem.flags);
+    obj = kmem_cache_alloc(kmem.kmem_addr, kmem.flags);
     if( put_user(obj, &user_kmem->result) )
         return -EFAULT;
+
     return 0;
 }
 
@@ -103,11 +104,33 @@ int ioctl_kmem_free(struct io_kmem_free* __user user_kmem){
     struct io_kmem_free kmem;
     if( cc_copy_from_user(&kmem, (void*) user_kmem, sizeof(struct io_kmem_free)) )
         return -EFAULT;
-    if(kmem.index >= MAX_KMEM){
-        pr_info("Index too large\n");
+
+    kmem_cache_free(kmem.kmem_addr, kmem.pointer);
+    return 0;
+}
+
+
+int ioctl_kmem_get(struct io_kmem_get* __user user_kmem){
+    struct io_kmem_get kmem;
+    struct kmem_cache* s;
+    struct list_head* head;
+
+    if( cc_copy_from_user(&kmem, (void*) user_kmem, sizeof(struct io_kmem_get)) )
         return -EFAULT;
+
+    // Cycle through all caches
+    if( IS_ERR(dumb_kmem) )
+      return -1;
+
+    list_for_each(head, &dumb_kmem->list){
+      s = list_entry(head, struct kmem_cache, list);
+      if(strncmp(kmem.name, s->name, NAME_SZ) == 0){
+        // Cache found !
+        if( put_user(s, &user_kmem->result) )
+          return -EFAULT;
+      }
     }
-    kmem_cache_free(global_kmem[kmem.index], kmem.pointer);
+
     return 0;
 }
 

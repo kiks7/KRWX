@@ -27,6 +27,7 @@
 #define IOCTL_MEMK_ALLOC    0xdd01
 #define IOCTL_MEMK_FREE     0xdd02
 #define IOCTL_TEST_KMEM     0xaaff
+#define IOCTL_MEMK_GET      0xbab3
 
 typedef unsigned int gfp_t;
 #define GFP_USER 0x100cc0
@@ -57,7 +58,7 @@ struct io_kmalloc {
 };
 
 struct io_kmem_create {
-    int index;
+    void* result; // EMPTY, the kernel will put the kmem address here
     size_t obj_size;
     size_t align;
     unsigned long flags;
@@ -67,15 +68,21 @@ struct io_kmem_create {
 };
 
 struct io_kmem_alloc{
-    unsigned int index;
+    void* kmem_addr;
     gfp_t flags;
     void* result;
 };
 
 struct io_kmem_free{
-    unsigned int index;
+    void* kmem_addr;
     void* pointer;
 };
+
+struct io_kmem_get{
+  void* result;
+  char name[NAME_SZ];
+};
+
 
 int fd_dev;
 
@@ -187,8 +194,6 @@ int init_krwx(){
     return 0;
 }
 
-
-
 void l_print_qword(void* address){
     unsigned long first;
     unsigned long second;
@@ -213,9 +218,9 @@ void test_kmem(unsigned long arg){
     ioctl(fd_dev, IOCTL_TEST_KMEM, arg);
 }
 
-int kmem_cache_create_usercopy(unsigned int index, char* name, unsigned int obj_size, unsigned long align, unsigned long flags, size_t useroffset, size_t usersize){
+void* kmem_cache_create_usercopy(char* name, unsigned int obj_size, unsigned long align, unsigned long flags, size_t useroffset, size_t usersize){
     struct io_kmem_create km;
-    km.index = index;
+    km.result = NULL;
     km.obj_size = obj_size;
     km.align = align;
     km.flags = flags;
@@ -225,31 +230,30 @@ int kmem_cache_create_usercopy(unsigned int index, char* name, unsigned int obj_
 
     if( ioctl(fd_dev, IOCTL_MEMK_CREATE, &km) ){
         perror("[-] IOCTL_MEMK_CREATE failed\n");
-        return -1;
+        return NULL;
     }
     
-    return 0;
+    return km.result;
 }
 
-void*kmem_cache_alloc(unsigned int index, unsigned long flags){
+void*kmem_cache_alloc(void* addr, unsigned long flags){
     /* The flags are only relevant if the cache has no available objects. */
     struct io_kmem_alloc km;
-    km.index = index;
+    km.kmem_addr = addr;
     km.flags = flags;
-    km.result = 0x0;
+    km.result = NULL;
 
     if( ioctl(fd_dev, IOCTL_MEMK_ALLOC, &km) ){
         perror("[-] IOCTL_MEMK_ALLOC failed\n");
-        return -1;
+        return NULL;
     }
 
     return km.result;
 }
 
-int kmem_cache_free(unsigned int index, void* pointer){
-    /* The flags are only relevant if the cache has no available objects. */
+int kmem_cache_free(void* addr, void* pointer){
     struct io_kmem_free km;
-    km.index = index;
+    km.kmem_addr = addr;
     km.pointer = pointer;
 
     if( ioctl(fd_dev, IOCTL_MEMK_FREE, &km) ){
@@ -259,6 +263,20 @@ int kmem_cache_free(unsigned int index, void* pointer){
 
     return 0;
 }
+
+void* kmem_cache_get(char* name){
+    struct io_kmem_get km;
+    strncpy(km.name, name, NAME_SZ);
+    km.result = NULL;
+
+    if( ioctl(fd_dev, IOCTL_MEMK_GET, &km) ){
+        perror("[-] IOCTL_MEMK_GET failed\n");
+        return NULL;
+    }
+
+    return km.result;
+}
+
 
 void __attribute__ ((constructor)) setup(void) {
     init_krwx();

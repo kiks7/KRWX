@@ -3,7 +3,7 @@
 
 int main(){
     //init_krwx();
-    void* chunk = kmalloc(150, _GFP_KERN);
+    void* chunk = kmalloc(150, GFP_KERNEL);
     printf("Allocated chunk @%p\n", chunk);
 
     // Allocate target object
