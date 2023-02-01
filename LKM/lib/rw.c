@@ -60,7 +60,6 @@ int ioctl_kfree(void* arg){
     return 0;
 }
 
-#ifdef CONFIG_HARDENED_USERCOPY
 int ioctl_kmem_create_usercopy(struct io_kmem_create* __user user_kmem){
     struct io_kmem_create kmem;
     void* kmem_addr;
@@ -76,15 +75,6 @@ int ioctl_kmem_create_usercopy(struct io_kmem_create* __user user_kmem){
 
     return 0;
 }
-#else
-int ioctl_kmem_create_usercopy(struct io_kmem_create* __user user_kmem){
-    pr_info("ioctl_kmem_create_usercopy not supported\n");
-    return -EINVAL;
-}
-
-#endif
-
-
 
 int ioctl_kmem_alloc(struct io_kmem_alloc* __user user_kmem){
     void* obj;
@@ -118,10 +108,10 @@ int ioctl_kmem_get(struct io_kmem_get* __user user_kmem){
     if( cc_copy_from_user(&kmem, (void*) user_kmem, sizeof(struct io_kmem_get)) )
         return -EFAULT;
 
-    // Cycle through all caches
-    if( IS_ERR(dumb_kmem) )
-      return -1;
+    if( !dumb_kmem )
+      return -EFAULT;
 
+    // Cycle through all caches
     list_for_each(head, &dumb_kmem->list){
       s = list_entry(head, struct kmem_cache, list);
       if(strncmp(kmem.name, s->name, NAME_SZ) == 0){

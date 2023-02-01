@@ -53,7 +53,7 @@ int krwx_init(void){
     }
     // Creating dumb kmem_cache just to retrieve its list (and have all slab_caches)
     dumb_kmem = kmem_cache_create("dumb_krwx", 16, 8, SLAB_ACCOUNT, NULL);
-    if(IS_ERR(dumb_kmem))
+    if( !dumb_kmem )
       pr_info("Error allocating the dumb cache\n");
 
     

@@ -25,8 +25,8 @@ typedef unsigned int gfp_t;
 #define _GFP_KERN 0xcc0
 
 
-// Since it's not possible to uset kmem_cache*, here you go :/
-// Its doesn't contain everything, but just what we need
+// Since it's not possible to use kmem_cache*, here you go :/
+// It doesn't contain everything, but just what we need
 struct kmem_cache {
   char pad[0x60];
   const char* name;
