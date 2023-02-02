@@ -127,11 +127,11 @@ uint64_t* kread(void* address, uint64_t size){
     uint64_t* ptr_content = malloc(size);
     memset(ptr_content, 0x0, size * sizeof(uint64_t));
     msg.kaddress = address;
-    msg.content = ptr_content;
+    msg.content = (uint64_t) ptr_content;
     msg.size = size;
     if( ioctl(fd_dev, IOCTL_RW_READ, &msg) ){
         perror("[-] IOCTL_RW_READ Failed\n");
-        return -1;
+        return NULL;
     }
     return ptr_content;
 }
