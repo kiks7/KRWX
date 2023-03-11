@@ -13,8 +13,8 @@
 #define IOCTL_MEMK_CREATE   0xdd00
 #define IOCTL_MEMK_ALLOC    0xdd01
 #define IOCTL_MEMK_FREE     0xdd02
-#define IOCTL_TEST_KMEM     0xaaff
 #define IOCTL_MEMK_GET      0xbab3
+#define IOCTL_SLAB_PTR      0xccdf
 
 #define MAX_KMEM    10
 #define NAME_SZ     20
@@ -24,53 +24,81 @@ typedef unsigned int gfp_t;
 #define _GFP_USER 0x100cc0
 #define _GFP_KERN 0xcc0
 
-
 // Since it's not possible to use kmem_cache*, here you go :/
 // It doesn't contain everything, but just what we need
+// definition: https://elixir.bootlin.com/linux/v6.2-rc7/source/include/linux/slub_def.h#L92
 struct kmem_cache {
-  char pad[0x60];
+  struct kmem_cache_cpu* cpu_slab;
+  char pad[0x60 - 0x8]; // 0x8 is the cpu_slab ptr size
   const char* name;
   struct list_head list;
+#ifdef CONFIG_SYSFS
+  char pad2[0x40]; // struct kobject kobj
+#endif
+#ifdef CONFIG_SLAB_FREELIST_HARDENED
+  unsigned long random; // offset not working properly!
+#endif
+};
+
+// definition: https://elixir.bootlin.com/linux/v6.2-rc7/source/include/linux/slub_def.h#L49
+struct kmem_cache_cpu {
+  void** freelist;
+  unsigned long tid;      /* Globally unique transaction id */
+  struct slab* slab;
+#ifdef CONFIG_SLUB_CPU_PARTIAL
+  struct slab* partial;   /* Partially allocated frozen slabs */
+#endif
+  local_lock_t lock;      /* Protects the fields above */
+#ifdef CONFIG_SLUB_STATS
+  unsigned stat[NR_SLUB_STAT_ITEMS];
+#endif
+};
+
+// definition: https://elixir.bootlin.com/linux/latest/source/mm/slab.h#L9
+// just interested in slab_cache actually
+struct slab {
+  unsigned long __page_flags;
+  struct kmem_cache *slab_cache;
 };
 
 struct msg_read{
-    void* kaddress;
-    uint64_t content; // Init 0 from client-side
-    uint64_t size;
+  void* kaddress;
+  uint64_t content; // Init 0 from client-side
+  uint64_t size;
 };
 
 struct msg_write{
-    void* kaddress;
-    uint64_t value;
-    uint64_t size;
+  void* kaddress;
+  uint64_t value;
+  uint64_t size;
 };
 
 struct io_kmalloc {
-    size_t size;
-    gfp_t flags;
-    void* result; // userland kmalloc return address
+  size_t size;
+  gfp_t flags;
+  void* result; // userland kmalloc return address
 };
 
 
 struct io_kmem_create {
-    void* result;
-    size_t obj_size;
-    size_t align;
-    unsigned long flags;
-    size_t useroffset;
-    size_t usersize;
-    char name[NAME_SZ];
+  void* result;
+  size_t obj_size;
+  size_t align;
+  unsigned long flags;
+  size_t useroffset;
+  size_t usersize;
+  char name[NAME_SZ];
 };
 
 struct io_kmem_alloc{
-    void* kmem_addr;
-    gfp_t flags;
-    void* result;
+  void* kmem_addr;
+  gfp_t flags;
+  void* result;
 };
 
 struct io_kmem_free{
-    void* kmem_addr;
-    void* pointer;
+  void* kmem_addr;
+  void* pointer;
 };
 
 struct io_kmem_get{
@@ -78,6 +106,10 @@ struct io_kmem_get{
   char name[NAME_SZ];
 };
 
+struct io_slab_ptr{
+  void* ptr;
+  char* name;
+};
 
 
 int krwx_init(void);
