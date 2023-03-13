@@ -309,7 +309,5 @@ void destruct(){
   // Cleaneup allocation made from slab_ptr
   for(int i=0; i < io_slab_ptr_allocs_idx; i++){
     free(io_slab_ptr_allocs[i]);
-    printf("free(io_slab_ptr_allocations[%d]\n", i);
-
   }
 }
