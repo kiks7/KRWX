@@ -124,11 +124,30 @@ int ioctl_kmem_get(struct io_kmem_get* __user user_kmem){
   return 0;
 }
 
+/* 
+ * Temporary workaround since virt_to_folio has been introducted in 5.17
+ * https://github.com/kiks7/KRWX/issues/1
+ */
+
+#ifndef folio_page_idx
+int virt_to_folio_supported = 0;
+static inline struct folio *virt_to_folio(const void *x){
+  return 0;
+}
+#endif
+#ifdef folio_page_idx
+int virt_to_folio_supported = 1;
+#endif
+
+
 int ioctl_slab_ptr(struct io_slab_ptr* __user user_slab_ptr){
   struct slab* s;
   struct kmem_cache* kmem;
   struct io_slab_ptr slab_ptr;
   size_t name_len;
+  if(!virt_to_folio_supported)
+    return -ENOTTY;
+
 
   if( cc_copy_from_user(&slab_ptr, (void*) user_slab_ptr, sizeof(struct io_slab_ptr)) )
     return -EFAULT;

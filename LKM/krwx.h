@@ -41,6 +41,22 @@ struct kmem_cache {
 };
 
 // definition: https://elixir.bootlin.com/linux/v6.2-rc7/source/include/linux/slub_def.h#L49
+
+/*
+ * lock_lock_t has been introduced in 5.8
+ * define it if it isn't (it's not a necessary field for KRWX however)
+ * we don't include linux/local_lock_internal.h intentionally
+ */
+
+#ifndef _LINUX_LOCAL_LOCK_H
+typedef struct {
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+	struct lockdep_map	dep_map;
+	struct task_struct	*owner;
+#endif
+} local_lock_t;
+#endif
+
 struct kmem_cache_cpu {
   void** freelist;
   unsigned long tid;      /* Globally unique transaction id */

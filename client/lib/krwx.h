@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
+#include <errno.h>
 
 #define Yellow(string) "\e[0;33m" string "\x1b[0m"
 #define BYellow(string) "\e[1;33m" string "\x1b[0m"
@@ -295,9 +296,13 @@ char* slab_ptr(void* ptr){
   km.ptr = ptr;
   km.name = out_string;
 
-  if( ioctl(fd_dev, IOCTL_SLAB_PTR, &km) ){
-    perror("[-] IOCTL_MEMK_GET failed\n");
+  if(ioctl(fd_dev, IOCTL_SLAB_PTR, &km)){
+    if (errno == ENOTTY)
+      printf("[-] slab_ptr is not supported for <5.17. A new implementation is planned to support it.\n");
+    else
+      printf("[-] slab_ptr failed");
   }
+
   return km.name;
 }
 

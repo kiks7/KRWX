@@ -24,7 +24,6 @@
 #include "lib/rw.c"
 #include <linux/slab.h>
 
-
 // Define FOPS
 static const struct file_operations krwx_fops = {
   .open = krwx_open,
